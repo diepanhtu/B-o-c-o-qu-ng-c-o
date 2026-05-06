@@ -8,14 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F3F4F6; color: #1F2937; overflow-x: hidden; transition: margin-right 0.3s ease; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F3F4F6; color: #1F2937; overflow-x: hidden; }
         .chart-container { position: relative; width: 100%; max-width: 900px; margin-left: auto; margin-right: auto; height: 350px; max-height: 400px; }
         @media (min-width: 768px) { .chart-container { height: 400px; } }
         .funnel-layer { display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-weight: bold; margin-bottom: 4px; border-radius: 4px; transition: all 0.3s ease; cursor: default; }
         
         .editable-active { outline: 2px dashed #6366F1; outline-offset: 4px; cursor: text; background-color: rgba(99, 102, 241, 0.05); }
-        .editor-panel { position: fixed; top: 0; right: -400px; width: 400px; height: 100vh; background: white; z-index: 50; transition: right 0.3s ease; overflow-y: auto; padding: 24px; box-shadow: -10px 0 25px rgba(0,0,0,0.1); }
-        .editor-panel.open { right: 0; }
         
         .edit-trigger { 
             position: fixed; 
@@ -36,36 +34,31 @@
             touch-action: none;
         }
         .edit-trigger:hover { background: #4F46E5; }
-        .edit-trigger:active { transform: scale(0.95); }
         
-        #mainContent { transition: width 0.3s ease; width: 100%; }
-        body.editor-open #mainContent { width: calc(100% - 400px); padding-right: 20px; }
-        @media (max-width: 1024px) { body.editor-open #mainContent { width: 100%; padding-right: 0; } }
+        #dataTableSection { display: none; }
+        body.edit-mode #dataTableSection { display: block; animation: fadeIn 0.5s ease; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .data-input-table td { padding: 8px; border: 1px solid #E5E7EB; }
+        .data-input-table th { padding: 12px 8px; background-color: #F9FAFB; border: 1px solid #E5E7EB; text-align: left; font-size: 0.75rem; color: #6B7280; text-transform: uppercase; }
+        .editable-cell { background-color: #FFF; transition: background 0.2s; }
+        .editable-cell:focus { background-color: #EEF2FF; outline: 2px solid #6366F1; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
     <div class="sr-only">
         XÁC NHẬN: Không sử dụng SVG. Không sử dụng Mermaid JS. 
-        TÍNH NĂNG: Phân tích chi tiết chuyên sâu cho 2 nhóm hiệu quả. Icon 44px có thể di chuyển.
+        TÍNH NĂNG: Khôi phục phân tích chi tiết. Chỉnh sửa trực tiếp. Bảng dữ liệu cuối trang. Icon di chuyển được.
     </div>
 
     <!-- Draggable Edit Button -->
-    <div id="toggleEditor" class="edit-trigger" title="Nhấn để mở, Kéo để di chuyển">
+    <div id="toggleEditor" class="edit-trigger" title="Nhấn để Bật/Tắt chế độ sửa, Kéo để di chuyển">
         <span style="font-size: 20px; pointer-events: none;">✏️</span>
-    </div>
-
-    <!-- Editor Panel -->
-    <div id="editorPanel" class="editor-panel">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-indigo-600">Dữ Liệu Báo Cáo</h3>
-            <button id="closeEditorTop" class="text-gray-400 hover:text-gray-600">✕</button>
-        </div>
-        <p class="text-sm text-gray-500 mb-6 italic">* Click vào chữ để sửa trực tiếp, nhập số bên dưới để cập nhật biểu đồ.</p>
-        
-        <div id="campaignInputs" class="space-y-6"></div>
-
-        <button id="closeEditor" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-bold transition-colors shadow-md">Lưu & Hoàn tất</button>
     </div>
 
     <div id="mainContent" class="max-w-6xl mx-auto space-y-8">
@@ -126,8 +119,8 @@
             </div>
         </section>
 
-        <!-- ANALYSIS SECTION (ENHANCED) -->
-        <section class="grid grid-cols-1 gap-6 pb-12">
+        <!-- ANALYSIS SECTION (ENHANCED & RESTORED) -->
+        <section class="grid grid-cols-1 gap-6">
             <!-- NHÓM HIỆU QUẢ CHUYÊN SÂU -->
             <div class="bg-indigo-50 rounded-2xl p-8 border border-indigo-100 shadow-sm">
                 <div class="flex items-center gap-3 mb-6">
@@ -138,20 +131,20 @@
                 <div id="analysisGoodDesc" class="space-y-6" contenteditable="false">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="bg-white p-5 rounded-xl border-l-4 border-indigo-500 shadow-sm">
-                            <h4 class="font-bold text-indigo-700 mb-2">Campaign "Ngôi sao": Tiệc cưới 380k</h4>
+                            <h4 class="font-bold text-indigo-700 mb-2">Chiến dịch "Ngôi sao": Tiệc cưới 380k</h4>
                             <p class="text-sm text-gray-600 leading-relaxed">
-                                Đây là chiến dịch đạt hiệu suất cao nhất toàn hệ thống với <strong>9 Leads thực tế</strong> từ mức ngân sách chỉ hơn 2 triệu đồng. Giá mỗi tin nhắn giữ ở mức <strong>80.000 VNĐ</strong>, nằm trong ngưỡng chi phí mục tiêu tối ưu của ngành. 
+                                Đạt hiệu suất cao nhất với <strong>9 Leads thực tế</strong> từ ngân sách chỉ hơn 2 triệu VNĐ. CPA giữ ở mức <strong>80.000 VNĐ</strong>, chứng minh thông điệp đánh trúng tâm lý khách hàng về giá.
                             </p>
                         </div>
                         <div class="bg-white p-5 rounded-xl border-l-4 border-indigo-500 shadow-sm">
-                            <h4 class="font-bold text-indigo-700 mb-2">Sức hút thị trường: Campaign Hội nghị</h4>
+                            <h4 class="font-bold text-indigo-700 mb-2">Thị trường ngách: Nhóm Hội nghị</h4>
                             <p class="text-sm text-gray-600 leading-relaxed">
-                                Dù đây là tệp khách hàng B2B khó tiếp cận (CPM cao), nhưng tỷ lệ ra tin nhắn rất chất lượng. Chỉ số CPA dưới <strong>88.000 VNĐ</strong> cho thấy thông điệp quảng cáo đang đánh trúng nhu cầu của các đơn vị tổ chức sự kiện/hội nghị chuyên nghiệp.
+                                Dù CPM cao do tệp hẹp, nhưng giá mỗi tin nhắn dưới <strong>88.000 VNĐ</strong> cho thấy chất lượng nội dung B2B rất tốt, thu hút đúng đối tượng tổ chức sự kiện.
                             </p>
                         </div>
                     </div>
                     <div class="bg-indigo-100 p-4 rounded-lg text-sm text-indigo-900 leading-relaxed">
-                        <strong>Hành động đề xuất:</strong> Chốt ngân sách bổ sung thêm 20-30% cho nhóm "Tiệc cưới 380k" và "Hội nghị 390k" trong tháng 2 để duy trì đà tăng trưởng Leads. Tiếp tục khai thác các tệp Lookalike từ nhóm khách hàng đã chuyển đổi thành công trong tháng 1.
+                        <strong>Hành động:</strong> Đề xuất tăng 20% ngân sách cho nhóm Tiệc cưới 380k. Duy trì độ phủ cho nhóm Hội nghị để tích lũy dữ liệu Pixel.
                     </div>
                 </div>
             </div>
@@ -160,28 +153,56 @@
             <div class="bg-pink-50 rounded-2xl p-8 border border-pink-100 shadow-sm">
                 <div class="flex items-center gap-3 mb-6">
                     <div class="bg-pink-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl shadow-md">!</div>
-                    <h3 id="analysisBadTitle" class="text-2xl font-bold text-pink-800" contenteditable="false">PHÂN TÍCH NHÓM CẦN TỐI ƯU KHẨN CẤP</h3>
+                    <h3 id="analysisBadTitle" class="text-2xl font-bold text-pink-800" contenteditable="false">PHÂN TÍCH NHÓM CẦN TỐI ƯU</h3>
                 </div>
                 
                 <div id="analysisBadDesc" class="space-y-6" contenteditable="false">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="bg-white p-5 rounded-xl border-l-4 border-pink-500 shadow-sm">
-                            <h4 class="font-bold text-pink-700 mb-2">Vấn đề tại TP.HCM: Chi phí hiển thị đắt đỏ</h4>
+                            <h4 class="font-bold text-pink-700 mb-2">Vấn đề tại TP.HCM: Chi phí quá cao</h4>
                             <p class="text-sm text-gray-600 leading-relaxed">
-                                Nhóm quảng cáo Sự kiện TP.HCM đang có <strong>CPM cao gấp đôi</strong> trung bình (47k vs 25k). Giá mỗi tin nhắn đạt mức báo động <strong>163.000 VNĐ</strong>. Dữ liệu cho thấy tệp khách hàng tại thị trường này đang quá cạnh tranh hoặc thông điệp chưa đủ sức hút so với các đối thủ tại chỗ.
+                                Nhóm Sự kiện TP.HCM đang lãng phí ngân sách với CPA lên tới <strong>163.000 VNĐ</strong>. CPM tại đây đắt gấp đôi mức trung bình, cho thấy sự cạnh tranh quá lớn.
                             </p>
                         </div>
                         <div class="bg-white p-5 rounded-xl border-l-4 border-pink-500 shadow-sm">
-                            <h4 class="font-bold text-pink-700 mb-2">Lãng phí ngân sách: Sinh nhật nhóm 2</h4>
+                            <h4 class="font-bold text-pink-700 mb-2">Lãng phí: Sinh nhật nhóm 2</h4>
                             <p class="text-sm text-gray-600 leading-relaxed">
-                                Campaign này tiêu tốn 3.5 triệu nhưng chỉ thu về 15 Mess, dẫn đến CPA cao kỷ lục <strong>164.000 VNĐ</strong>. Tỷ lệ tương tác/leads cực thấp cho thấy nội dung quảng cáo đang thu hút "lượt xem ảo" mà không mang lại giá trị chuyển đổi thực tế cho bộ phận kinh doanh.
+                                Chi 3.5 triệu chỉ thu 15 Mess (CPA 164k). Đây là mức không thể chấp nhận được. Tỷ lệ tương tác cao nhưng không ra đơn cho thấy nội dung chưa thuyết phục.
                             </p>
                         </div>
                     </div>
                     <div class="bg-pink-100 p-4 rounded-lg text-sm text-pink-900 leading-relaxed">
-                        <strong>Hành động đề xuất:</strong> Tạm dừng các nhóm quảng cáo có CPA vượt mức 150.000 VNĐ. Rà soát lại Creative (Hình ảnh/Video) cho tệp TP.HCM. Nếu hiệu suất không cải thiện sau 1 tuần điều chỉnh, sẽ dồn toàn bộ ngân sách còn lại về nhóm Tiệc cưới ở thị trường truyền thống để đảm bảo chỉ tiêu số lượng khách hàng.
+                        <strong>Hành động:</strong> Cắt giảm 50% ngân sách nhóm Sinh nhật 2. Tái cấu trúc lại tệp đối tượng tại TP.HCM hoặc thay đổi hình ảnh quảng cáo mới.
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- DYNAMIC DATA TABLE (Visible in Edit Mode) -->
+        <section id="dataTableSection" class="bg-white rounded-xl shadow-2xl p-8 border-2 border-indigo-500">
+            <h2 class="text-xl font-bold text-indigo-700 mb-4 flex items-center gap-2">
+                📊 Bảng Chỉnh Sửa Dữ Liệu Biểu Đồ
+            </h2>
+            <p class="text-xs text-gray-500 mb-6 italic">Sửa tên hoặc con số trực tiếp trong bảng này để biểu đồ cập nhật tức thì.</p>
+            <div class="overflow-x-auto">
+                <table class="data-input-table w-full text-sm">
+                    <thead>
+                        <tr>
+                            <th>Tên Chiến Dịch</th>
+                            <th>Chi Phí (₫)</th>
+                            <th>Tiếp Cận</th>
+                            <th>Tin Nhắn</th>
+                            <th>Leads</th>
+                            <th>Tương Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataEntryBody">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="toggleEditor()" class="bg-indigo-600 text-white px-8 py-2 rounded-full font-bold shadow-lg hover:bg-indigo-700 transition-colors">Lưu & Kết Thúc Chỉnh Sửa</button>
             </div>
         </section>
 
@@ -194,7 +215,8 @@
     <script>
         Chart.register(ChartDataLabels);
 
-        let reportData = JSON.parse(localStorage.getItem('metaAdsReportV3')) || {
+        // --- DATA STATE ---
+        let reportData = JSON.parse(localStorage.getItem('metaAdsReportV4')) || {
             campaigns: [
                 { name: "Quý I - Tiệc cưới", spend: 8762218, mess: 93, leads: 4, reach: 306731, engage: 8355 },
                 { name: "Sự kiện - TP.HCM", spend: 5228669, mess: 24, leads: 2, reach: 100748, engage: 5773 },
@@ -232,9 +254,9 @@
             document.getElementById('totalLeadsDisplay').innerText = totalL;
 
             document.getElementById('funnelReach').innerText = totalR.toLocaleString();
-            document.getElementById('funnelEngage').innerText = `${totalE.toLocaleString()} (${((totalE/totalR)*100).toFixed(1)}%)`;
-            document.getElementById('funnelMess').innerText = `${totalM.toLocaleString()} (${((totalM/totalE)*100).toFixed(1)}%)`;
-            document.getElementById('funnelLeads').innerText = `${totalL.toLocaleString()} (${((totalL/totalM)*100).toFixed(1)}%)`;
+            document.getElementById('funnelEngage').innerText = `${totalE.toLocaleString()} (${totalR > 0 ? ((totalE/totalR)*100).toFixed(1) : 0}%)`;
+            document.getElementById('funnelMess').innerText = `${totalM.toLocaleString()} (${totalE > 0 ? ((totalM/totalE)*100).toFixed(1) : 0}%)`;
+            document.getElementById('funnelLeads').innerText = `${totalL.toLocaleString()} (${totalM > 0 ? ((totalL/totalM)*100).toFixed(1) : 0}%)`;
 
             spendVsMessChart.data.labels = labels;
             spendVsMessChart.data.datasets[0].data = spends;
@@ -245,7 +267,7 @@
                 x: c.reach, y: cpa[i], r: c.leads === 0 ? 5 : Math.min(25, 5 + c.leads * 2), label: c.name
             }));
             costEfficiencyChart.update();
-            localStorage.setItem('metaAdsReportV3', JSON.stringify(reportData));
+            localStorage.setItem('metaAdsReportV4', JSON.stringify(reportData));
         };
 
         const initCharts = () => {
@@ -274,12 +296,12 @@
                         tooltip: { callbacks: { title: tooltipConfig.callbacks.title, label: (ctx) => `Reach: ${ctx.raw.x.toLocaleString()} | CPA: ${Math.round(ctx.raw.y).toLocaleString()} ₫` }},
                         datalabels: { display: true, anchor: 'end', align: 'right', offset: 10, formatter: (v) => v.label, font: { weight: 'bold', size: 10 }, color: '#6B7280', clip: false }
                     },
-                    scales: { x: { title: { display: true, text: 'Lượt tiếp cận (Reach)' } }, y: { title: { display: true, text: 'Giá 1 Tin nhắn (VNĐ)' } } }
+                    scales: { x: { title: { display: true, text: 'Reach' } }, y: { title: { display: true, text: 'Giá 1 Tin nhắn (VNĐ)' } } }
                 }
             });
         };
 
-        // --- DRAGGABLE & EDITOR LOGIC ---
+        // --- DRAGGABLE & IN-PAGE EDITOR LOGIC ---
         const editTrigger = document.getElementById('toggleEditor');
         let isDragging = false, dragStartX, dragStartY, initialBtnX, initialBtnY, hasMoved = false;
 
@@ -319,47 +341,47 @@
         window.addEventListener('touchend', endDrag);
 
         const toggleEditor = () => {
-            const panel = document.getElementById('editorPanel');
-            const isOpen = panel.classList.contains('open');
-            panel.classList.toggle('open');
-            document.body.classList.toggle('editor-open');
+            const isEditing = document.body.classList.toggle('edit-mode');
             document.querySelectorAll('[contenteditable]').forEach(el => {
-                el.contentEditable = !isOpen;
-                el.classList.toggle('editable-active', !isOpen);
+                el.contentEditable = isEditing;
+                el.classList.toggle('editable-active', isEditing);
             });
-            if (!isOpen) renderInputs();
-            setTimeout(() => { spendVsMessChart.resize(); costEfficiencyChart.resize(); }, 350);
+            if (isEditing) {
+                renderDataTable();
+                document.getElementById('dataTableSection').scrollIntoView({ behavior: 'smooth' });
+            }
         };
 
-        const renderInputs = () => {
-            const container = document.getElementById('campaignInputs');
-            container.innerHTML = '';
+        const renderDataTable = () => {
+            const tbody = document.getElementById('dataEntryBody');
+            tbody.innerHTML = '';
             reportData.campaigns.forEach((camp, i) => {
-                const card = document.createElement('div');
-                card.className = 'p-4 bg-gray-50 rounded-lg border border-gray-100 shadow-sm';
-                card.innerHTML = `
-                    <div class="font-bold text-indigo-600 mb-3 border-b pb-1 text-sm">${camp.name}</div>
-                    <div class="grid grid-cols-2 gap-3 text-xs">
-                        <div><label class="block text-gray-400 mb-1">Chi phí (₫)</label><input type="number" value="${camp.spend}" onchange="updateData(${i}, 'spend', this.value)" class="w-full border p-2 rounded"></div>
-                        <div><label class="block text-gray-400 mb-1">Reach</label><input type="number" value="${camp.reach}" onchange="updateData(${i}, 'reach', this.value)" class="w-full border p-2 rounded"></div>
-                        <div><label class="block text-gray-400 mb-1">Tin nhắn</label><input type="number" value="${camp.mess}" onchange="updateData(${i}, 'mess', this.value)" class="w-full border p-2 rounded"></div>
-                        <div><label class="block text-gray-400 mb-1">Leads</label><input type="number" value="${camp.leads}" onchange="updateData(${i}, 'leads', this.value)" class="w-full border p-2 rounded"></div>
-                        <div class="col-span-2"><label class="block text-gray-400 mb-1">Tương tác</label><input type="number" value="${camp.engage}" onchange="updateData(${i}, 'engage', this.value)" class="w-full border p-2 rounded"></div>
-                    </div>
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="editable-cell font-medium text-indigo-600" contenteditable="true" oninput="updateTableData(${i}, 'name', this.innerText)">${camp.name}</td>
+                    <td class="editable-cell" contenteditable="true" oninput="updateTableData(${i}, 'spend', this.innerText)">${camp.spend}</td>
+                    <td class="editable-cell" contenteditable="true" oninput="updateTableData(${i}, 'reach', this.innerText)">${camp.reach}</td>
+                    <td class="editable-cell" contenteditable="true" oninput="updateTableData(${i}, 'mess', this.innerText)">${camp.mess}</td>
+                    <td class="editable-cell" contenteditable="true" oninput="updateTableData(${i}, 'leads', this.innerText)">${camp.leads}</td>
+                    <td class="editable-cell" contenteditable="true" oninput="updateTableData(${i}, 'engage', this.innerText)">${camp.engage}</td>
                 `;
-                container.appendChild(card);
+                tbody.appendChild(tr);
             });
         };
 
-        window.updateData = (idx, field, val) => {
-            reportData.campaigns[idx][field] = parseFloat(val) || 0;
+        window.updateTableData = (idx, field, val) => {
+            if (field === 'name') {
+                reportData.campaigns[idx][field] = val;
+            } else {
+                const num = parseFloat(val.replace(/[^\d.]/g, ''));
+                reportData.campaigns[idx][field] = isNaN(num) ? 0 : num;
+            }
             updateVisuals();
         };
 
         window.onload = () => {
-            initCharts(); updateVisuals();
-            document.getElementById('closeEditor').onclick = toggleEditor;
-            document.getElementById('closeEditorTop').onclick = toggleEditor;
+            initCharts();
+            updateVisuals();
         };
     </script>
 </body>
